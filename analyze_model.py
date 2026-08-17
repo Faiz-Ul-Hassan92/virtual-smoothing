@@ -8,9 +8,29 @@ import torchvision.transforms as T
 from torchvision import datasets
 import matplotlib.pyplot as plt
 
-# Import model helper functions from existing script
-from eval_clean import get_model, filter_state_dict
+from models import resnext_cifar
+from collections import OrderedDict
 
+def get_model(model_name, num_real_classes, num_v_classes, dataset='cifar10'):
+    if model_name == 'resnext-29_2x64d':
+        return resnext_cifar.ResNeXt29_2x64d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+    elif model_name == 'resnext-29_2x32d':
+        return resnext_cifar.ResNeXt29_2x32d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+    elif model_name == 'resnext-20_2x32d':
+        return resnext_cifar.ResNeXt20_2x32d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+    elif model_name == 'resnext-20_1x16d':
+        return resnext_cifar.ResNeXt20_1x16d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+    else:
+        raise ValueError('un-supported model: {0}'.format(model_name))
+
+def filter_state_dict(state_dict):
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        if 'module' in k:
+            new_state_dict[k[7:]] = v
+        else:
+            new_state_dict[k] = v
+    return new_state_dict
 parser = argparse.ArgumentParser(description='Analyze Virtual Smoothing Models (Q4 & Q5)')
 parser.add_argument('--model_name', default='resnext-29_2x64d', help='Model name')
 parser.add_argument('--dataset', default='cifar10', help='Dataset (e.g., cifar10)')
