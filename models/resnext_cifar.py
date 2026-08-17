@@ -93,6 +93,9 @@ def ResNeXt29_8x64d(**kwargs):
 def ResNeXt29_32x4d(**kwargs):
     return ResNeXt(num_blocks=[3,3,3], cardinality=32, bottleneck_width=4, **kwargs)
 
+def ResNeXt29_2x32d(**kwargs):
+    return ResNeXt(num_blocks=[3,3,3], cardinality=2, bottleneck_width=32, **kwargs)
+
 
 if __name__ == '__main__':
     from torchsummary import summary

@@ -62,6 +62,7 @@ parser.add_argument('--sub_alpha', default=-1.0, type=float, help='Sub alpha par
 parser.add_argument('--add_noise', action='store_true', default=False, help='Add noise to virtual classes')
 parser.add_argument('--v_type', default='u', type=str, help='Type of noise added to virtual classes: u or n')
 parser.add_argument('--vs_warmup', default=0, type=int, help='Warmup epoch for using VS labels.')
+parser.add_argument('--extract_features', action='store_true', default=False, help='Extract test set features after training.')
 
 parser.add_argument('--teacher_model_name', default='wrn-34-10',
                     help='Teacher model name: wrn-28-10, wrn-34-10, wrn-40-4, resnet-18, or resnet-50')
@@ -341,6 +342,37 @@ def train(model, train_loader, optimizer, scheduler, test_loader):
         print('================================================================')
         save_cpt(model, optimizer, epoch)
 
+    if args.extract_features:
+        print("Extracting features on the test set...")
+        features = {}
+        actual_model = model.module if isinstance(model, torch.nn.DataParallel) else model
+        
+        def hook_fn(module, inp, out):
+            features['penultimate'] = inp[0].detach().cpu().view(inp[0].size(0), -1).numpy()
+        
+        actual_model.linear.register_forward_hook(hook_fn)
+        
+        all_features, all_labels, all_inputs, all_preds = [], [], [], []
+        
+        model.eval()
+        with torch.no_grad():
+            for batch_x, batch_y in test_loader:
+                if use_cuda:
+                    batch_x = batch_x.cuda()
+                logits = model(batch_x)
+                _, preds = torch.max(logits[:, :NUM_REAL_CLASSES], dim=1)
+                
+                all_features.append(features['penultimate'])
+                all_labels.append(batch_y.numpy())
+                all_inputs.append(batch_x.cpu().numpy())
+                all_preds.append(preds.cpu().numpy())
+                
+        np.save(os.path.join(args.model_dir, 'test_features.npy'), np.concatenate(all_features, axis=0))
+        np.save(os.path.join(args.model_dir, 'test_labels.npy'), np.concatenate(all_labels, axis=0))
+        np.save(os.path.join(args.model_dir, 'test_inputs.npy'), np.concatenate(all_inputs, axis=0))
+        np.save(os.path.join(args.model_dir, 'test_preds.npy'), np.concatenate(all_preds, axis=0))
+        print(f"Features, labels, inputs, and predictions saved to {args.model_dir}")
+
     return loss.item(), test_nat_acc
 
 
@@ -374,6 +406,8 @@ def get_model(model_name, num_real_classes, num_v_classes, normalizer=None, data
             return resnext_tiny200.resnext50_32x4d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
         elif model_name == 'resnext-29_2x64d':
             return resnext_cifar.ResNeXt29_2x64d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+        elif model_name == 'resnext-29_2x32d':
+            return resnext_cifar.ResNeXt29_2x32d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
         elif model_name == 'resnext-29_32x4d':
             return resnext_cifar.ResNeXt29_32x4d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
         elif model_name == 'densenet-121':
