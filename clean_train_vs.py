@@ -58,6 +58,7 @@ parser.add_argument('--resume_epoch', type=int, default=-1, metavar='N', help='E
 parser.add_argument('--alpha', default=0.7, type=float, help='Total confidence of virtual smoothing classes')
 parser.add_argument('--v_classes', default=10, type=int,
                     help='The number of virtual smoothing classes')
+parser.add_argument('--sub_alpha', default=-1.0, type=float, help='Sub alpha parameter')
 parser.add_argument('--add_noise', action='store_true', default=False, help='Add noise to virtual classes')
 parser.add_argument('--v_type', default='u', type=str, help='Type of noise added to virtual classes: u or n')
 parser.add_argument('--vs_warmup', default=0, type=int, help='Warmup epoch for using VS labels.')
