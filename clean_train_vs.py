@@ -324,8 +324,8 @@ def train(model, train_loader, optimizer, scheduler, test_loader):
         batch_time = end_time - start_time
         train_nat_acc = (float(train_nat_correct) / total) * 100
         message = 'Epoch {}, Time {}, LR: {}, Loss: {}, ' \
-                  'Training nat acc: {}, train_nat_max_in_v: {}, train_nat_max_in_v_corr: {}, ' \
-            .format(epoch, batch_time, epoch_lr, loss.item(), train_nat_acc, train_nat_max_in_v)
+                  'Training nat acc: {}, train_nat_max_in_v: {}, train_nat_max_in_v_corr: {}' \
+            .format(epoch, batch_time, epoch_lr, loss.item(), train_nat_acc, train_nat_max_in_v, train_nat_max_in_v_corr)
         print(message)
 
         # Evaluation
@@ -340,7 +340,7 @@ def train(model, train_loader, optimizer, scheduler, test_loader):
         print('================================================================')
         save_cpt(model, optimizer, epoch)
 
-    return loss.item(), test_nat_acc, test_nat_v_acc, test_nat_inv_acc
+    return loss.item(), test_nat_acc
 
 
 def get_model(model_name, num_real_classes, num_v_classes, normalizer=None, dataset='cifar10'):
