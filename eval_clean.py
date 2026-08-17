@@ -30,6 +30,7 @@ parser.add_argument('--v_classes', default=10, type=int,
                     help='The number of virtual smoothing classes')
 parser.add_argument('--alpha', default=0., type=float, help='Total confidence of virtual smoothing classes')
 parser.add_argument('--temp', default=1.0, type=float, help='temperature scaling')
+parser.add_argument('--incorrect_test', action='store_true', help='If true, include virtual classes in the prediction space (for Q4)')
 
 args = parser.parse_args()
 
@@ -90,6 +91,12 @@ def get_model(model_name, num_real_classes, num_v_classes, normalizer=None, data
             return resnext_tiny200.resnext50_32x4d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
         elif model_name == 'resnext-29_2x64d':
             return resnext_cifar.ResNeXt29_2x64d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+        elif model_name == 'resnext-29_2x32d':
+            return resnext_cifar.ResNeXt29_2x32d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+        elif model_name == 'resnext-20_2x32d':
+            return resnext_cifar.ResNeXt20_2x32d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+        elif model_name == 'resnext-20_1x16d':
+            return resnext_cifar.ResNeXt20_1x16d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
         elif model_name == 'resnext-29_32x4d':
             return resnext_cifar.ResNeXt29_32x4d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
         elif model_name == 'densenet-121':
@@ -222,10 +229,13 @@ def expected_calibration_error(samples, true_labels, M=5):
     bin_uppers = bin_boundaries[1:]
 
     # get max probability per sample i
-    confidences = np.max(samples[:, :NUM_REAL_CLASSES], axis=1)
-    # get predictions from confidences (positional in this case)
-    predicted_label = np.argmax(samples[:, :NUM_REAL_CLASSES], axis=1)
-
+    if args.incorrect_test:
+        confidences = np.max(samples, axis=1)
+        predicted_label = np.argmax(samples, axis=1)
+    else:
+        confidences = np.max(samples[:, :NUM_REAL_CLASSES], axis=1)
+        predicted_label = np.argmax(samples[:, :NUM_REAL_CLASSES], axis=1)
+    
     # get a boolean list of correct/false predictions
     accuracies = predicted_label==true_labels
     bin_info = {}
@@ -299,7 +309,8 @@ def main():
     cpt = filter_state_dict(torch.load(args.model_file, map_location=torch.device('cpu')))
     model.load_state_dict(cpt)
     model = model.to(device)
-    cal_ece(model, test_loader)
+    ece, _ = cal_ece(model, test_loader)
+    print("Final Result => ECE: {}, Accuracy (from ECE bins, if outputted above): Check logs".format(ece))
 
 if __name__ == '__main__':
     main()

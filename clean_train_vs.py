@@ -408,6 +408,10 @@ def get_model(model_name, num_real_classes, num_v_classes, normalizer=None, data
             return resnext_cifar.ResNeXt29_2x64d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
         elif model_name == 'resnext-29_2x32d':
             return resnext_cifar.ResNeXt29_2x32d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+        elif model_name == 'resnext-20_2x32d':
+            return resnext_cifar.ResNeXt20_2x32d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
+        elif model_name == 'resnext-20_1x16d':
+            return resnext_cifar.ResNeXt20_1x16d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
         elif model_name == 'resnext-29_32x4d':
             return resnext_cifar.ResNeXt29_32x4d(num_real_classes=num_real_classes, num_v_classes=num_v_classes)
         elif model_name == 'densenet-121':
